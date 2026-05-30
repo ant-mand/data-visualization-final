@@ -1,0 +1,31 @@
+modality,field,field_label,n_datasets,coverage_pct
+speech,has_identifier,Identifier present (id/name/modality),95,100.0
+speech,has_link,Public link present (HF or paper),95,46.32
+speech,has_sources,Source information present,95,0.0
+speech,has_license,License information present,95,100.0
+speech,has_creators,Creator information present,95,100.0
+speech,has_human_annotation,Annotation information present,95,0.0
+speech,has_parent_refs,Parent dataset references present,95,0.0
+speech,has_generating_models,Generating model references present,95,0.0
+speech,has_tasks,Task information present,95,0.0
+speech,has_year,Year/date present,95,49.47
+text,has_identifier,Identifier present (id/name/modality),3717,100.0
+text,has_link,Public link present (HF or paper),3717,98.04
+text,has_sources,Source information present,3717,94.19
+text,has_license,License information present,3717,100.0
+text,has_creators,Creator information present,3717,90.85
+text,has_human_annotation,Annotation information present,3717,97.77
+text,has_parent_refs,Parent dataset references present,3717,51.87
+text,has_generating_models,Generating model references present,3717,13.26
+text,has_tasks,Task information present,3717,100.0
+text,has_year,Year/date present,3717,95.0
+video,has_identifier,Identifier present (id/name/modality),105,100.0
+video,has_link,Public link present (HF or paper),105,100.0
+video,has_sources,Source information present,105,100.0
+video,has_license,License information present,105,100.0
+video,has_creators,Creator information present,105,99.05
+video,has_human_annotation,Annotation information present,105,0.0
+video,has_parent_refs,Parent dataset references present,105,0.0
+video,has_generating_models,Generating model references present,105,0.0
+video,has_tasks,Task information present,105,100.0
+video,has_year,Year/date present,105,29.52

@@ -1,0 +1,19 @@
+modality,license_bucket,n_datasets,n_modality_total,pct_within_modality
+speech,Permissive,38,95,40.0
+speech,Copyleft / Share-Alike,12,95,12.63
+speech,Non-Commercial,13,95,13.68
+speech,Custom/Restricted,13,95,13.68
+speech,Other,6,95,6.32
+speech,Unspecified,13,95,13.68
+text,Permissive,1315,3717,35.38
+text,Copyleft / Share-Alike,857,3717,23.06
+text,Non-Commercial,582,3717,15.66
+text,Model-Restricted,162,3717,4.36
+text,Custom/Restricted,165,3717,4.44
+text,Other,57,3717,1.53
+text,Unspecified,579,3717,15.58
+video,Permissive,27,105,25.71
+video,Non-Commercial,10,105,9.52
+video,Custom/Restricted,28,105,26.67
+video,Other,3,105,2.86
+video,Unspecified,37,105,35.24

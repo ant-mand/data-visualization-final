@@ -1,0 +1,31 @@
+modality,field,field_label,n_datasets,coverage_pct
+speech,has_license,License documented,95,100.0
+speech,has_creators,Creators documented,95,100.0
+speech,has_sources,Sources documented,95,0.0
+speech,has_tasks,Tasks documented,95,0.0
+speech,has_human_annotation,Human annotation flag documented,95,0.0
+speech,has_parent_refs,Parent datasets documented,95,0.0
+speech,has_generating_models,Generating models documented,95,0.0
+speech,has_hf_url,HF URL present,95,46.31578947368421
+speech,has_arxiv_url,Paper URL present,95,0.0
+speech,has_year,Year present,95,49.473684210526315
+text,has_license,License documented,3717,100.0
+text,has_creators,Creators documented,3717,90.85283831046543
+text,has_sources,Sources documented,3717,94.18886198547214
+text,has_tasks,Tasks documented,3717,100.0
+text,has_human_annotation,Human annotation flag documented,3717,97.7670164110842
+text,has_parent_refs,Parent datasets documented,3717,51.869787463007796
+text,has_generating_models,Generating models documented,3717,13.263384449825127
+text,has_hf_url,HF URL present,3717,94.24266881894
+text,has_arxiv_url,Paper URL present,3717,71.75141242937853
+text,has_year,Year present,3717,94.99596448748991
+video,has_license,License documented,105,100.0
+video,has_creators,Creators documented,105,99.04761904761905
+video,has_sources,Sources documented,105,100.0
+video,has_tasks,Tasks documented,105,100.0
+video,has_human_annotation,Human annotation flag documented,105,0.0
+video,has_parent_refs,Parent datasets documented,105,0.0
+video,has_generating_models,Generating models documented,105,0.0
+video,has_hf_url,HF URL present,105,12.380952380952381
+video,has_arxiv_url,Paper URL present,105,98.09523809523809
+video,has_year,Year present,105,29.523809523809526
