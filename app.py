@@ -1,8 +1,7 @@
 """Build dash app."""
 
-from dash import Dash, Input, Output, State, dcc, html, dash_table, callback_context, no_update
+from dash import Dash, Input, Output, State, dcc, html, dash_table, callback_context
 from dash_extensions import EventListener
-import plotly.graph_objects as go
 
 from dashboard_utils import (
     apply_styles,
@@ -85,9 +84,9 @@ app.layout = html.Div(
                         html.H1("Multimodal Dataset Provenance Dashboard"),
                         html.P(
                             "This dashboard analyses data available from the Data Provenance Initiative, which is linked below. "
-                            "It explores how openly available text, speech, and video datasets describe where their data comes from and how it can be used. "
+                            "It explores how openly available text, speech, and video datasets describe where their data comes from and how they can be used. "
                             "It summarizes documentation coverage for key fields like licenses, creators, sources, and tasks, and compares how these patterns differ across modalities. "
-                            "The goal is to give practitioners and policymakers a quick way to understand the dataset produced by the initiative, which will help answer questions related to the ecosystem's transparency and responsible AI development. "
+                            "The goal is to give practitioners and policymakers a quick way to understand the dataset produced by the initiative, which will help answer questions related to the ecosystem's transparency and responsible AI development."
                         ),
                     ],
                 ),
@@ -95,12 +94,17 @@ app.layout = html.Div(
                     className="section hero-section",
                     children=[
                         html.H2("What is data provenance?"),
-                        html.P("Data provenance describes the “story” of a dataset: where its contents came from, how they were collected or generated, how they were transformed, and under what terms they can be used. Provenance includes not just web domains or platforms (like Wikipedia or YouTube), but also licensing, geographic and linguistic coverage, human annotation, and relationships between derived datasets and their sources. Provenance makes it possible to trace training data back to its origins, assess legal and ethical risks, and understand over- or under-represented data in AI systems. Weak or missing provenance may obscure restrictions, amplify existing skews in who is represented, and make it harder to build accountable and inclusive models."),
+                        html.P(
+                            "Data provenance describes the “story” of a dataset: where its contents came from, how they were collected or generated, how they were transformed, and under what terms they can be used. "
+                            "Provenance includes not just web domains or platforms (like Wikipedia or YouTube), but also licensing, geographic and linguistic coverage, human annotation, and relationships between derived datasets and their sources. "
+                            "Provenance makes it possible to trace training data back to its origins, assess legal and ethical risks, and understand over- or under-represented data in AI systems. "
+                            "Weak or missing provenance may obscure restrictions, amplify existing skews in who is represented, and make it harder to build accountable and inclusive models."
+                        ),
                         html.P([
                             "In order to address this problem, the Data Provenance Initiative ",
                             html.Strong("audited over 1800 datasets"),
-                            ", tracing their sources, licenses, creators, and uses, and released an open dataset and interactive Explorer tool so practitioners can filter, inspect, and document training data with much stronger accountability."
-                        ]), 
+                            ", tracing their sources, licenses, creators, and uses, and released an open dataset and interactive Explorer tool so practitioners can filter, inspect, and document training data with much stronger accountability.",
+                        ]),
                         html.Div(
                             html.A(
                                 "Visit the Data Provenance Initiative",
@@ -114,9 +118,9 @@ app.layout = html.Div(
                         html.Br(),
                         html.Br(),
                         html.H2("Our Goal"),
-                        html.P([
-                            "We extend their work by comparing provenance across modalities. We look at where documentation is strongest and which policy‑relevant fields are missing or underspecified in the dataset records."
-                        ]), 
+                        html.P(
+                            "We extend their work by comparing provenance across modalities. We look at where documentation is strongest and which policy-relevant fields are missing or underspecified in the dataset records."
+                        ),
                     ],
                 ),
                 html.Section(
@@ -133,25 +137,31 @@ app.layout = html.Div(
                                             "datasets",
                                             "# of Dataset Records Audited",
                                             metrics["datasets"],
-                                            "Total datasets included in the dashboard corpus.",
+                                            "# of dataset records analyzed.",
                                         ),
                                         wrapped_metric_card(
                                             "hfdata",
                                             "# of datasets with Hugging Face (HF) download data",
                                             metrics["hf_data"],
-                                            "Datasets with observable Hugging Face download counts.",
+                                            "# of datasets with data on HF downloads.",
                                         ),
                                         wrapped_metric_card(
                                             "modalities",
-                                            "Modalities Compared",
+                                            "Modalities Represented",
                                             metrics["modalities"],
-                                            "The three media types compared in this analysis.",
+                                            "Modalities represented in the dataset.",
                                         ),
                                         wrapped_metric_card(
                                             "docscore",
                                             "Avg. visibility of key metadata fields across datasets",
                                             metrics["mean_doc"],
                                             "Average visibility of key metadata fields across datasets.",
+                                        ),
+                                        wrapped_metric_card(
+                                            "datasetbreakdown",
+                                            "Dataset records by modality",
+                                            metrics["dataset_breakdown"],
+                                            "Count of audited dataset records for text, speech, and video.",
                                         ),
                                     ],
                                 ),
@@ -347,9 +357,10 @@ def render_documentation_view(view_state):
     Input("modalities-listener", "event"),
     Input("hfdata-listener", "event"),
     Input("docscore-listener", "event"),
+    Input("datasetbreakdown-listener", "event"),
     prevent_initial_call=True,
 )
-def track_hover(datasets_event, modalities_event, hfdata_event, docscore_event):
+def track_hover(datasets_event, modalities_event, hfdata_event, docscore_event, datasetbreakdown_event):
     triggered = callback_context.triggered
     if not triggered:
         return ""
@@ -360,6 +371,7 @@ def track_hover(datasets_event, modalities_event, hfdata_event, docscore_event):
         "modalities-listener": modalities_event,
         "hfdata-listener": hfdata_event,
         "docscore-listener": docscore_event,
+        "datasetbreakdown-listener": datasetbreakdown_event,
     }.get(trigger_id)
 
     card_map = {
@@ -367,6 +379,7 @@ def track_hover(datasets_event, modalities_event, hfdata_event, docscore_event):
         "modalities-listener": "modalities",
         "hfdata-listener": "hfdata",
         "docscore-listener": "docscore",
+        "datasetbreakdown-listener": "datasetbreakdown",
     }
 
     if not event:
@@ -386,9 +399,10 @@ def track_hover(datasets_event, modalities_event, hfdata_event, docscore_event):
     Input("modalities-more", "n_clicks"),
     Input("hfdata-more", "n_clicks"),
     Input("docscore-more", "n_clicks"),
+    Input("datasetbreakdown-more", "n_clicks"),
     prevent_initial_call=True,
 )
-def set_active_metric(datasets_more, modalities_more, hfdata_more, docscore_more):
+def set_active_metric(datasets_more, modalities_more, hfdata_more, docscore_more, datasetbreakdown_more):
     triggered = callback_context.triggered
     if not triggered:
         return ""
@@ -399,6 +413,7 @@ def set_active_metric(datasets_more, modalities_more, hfdata_more, docscore_more
         "modalities-more": "modalities",
         "hfdata-more": "hfdata",
         "docscore-more": "docscore",
+        "datasetbreakdown-more": "datasetbreakdown",
     }
     return mapping.get(trigger_id, "")
 
@@ -410,6 +425,7 @@ def set_active_metric(datasets_more, modalities_more, hfdata_more, docscore_more
     Output("modalities-card", "className"),
     Output("hfdata-card", "className"),
     Output("docscore-card", "className"),
+    Output("datasetbreakdown-card", "className"),
     Input("active-metric-store", "data"),
     Input("hovered-card-store", "data"),
 )
@@ -419,6 +435,7 @@ def update_metric_detail(active_metric, hovered_card):
         "modalities": "metric-card",
         "hfdata": "metric-card",
         "docscore": "metric-card",
+        "datasetbreakdown": "metric-card",
     }
 
     if not active_metric or hovered_card != active_metric:
@@ -429,6 +446,7 @@ def update_metric_detail(active_metric, hovered_card):
             base_classes["modalities"],
             base_classes["hfdata"],
             base_classes["docscore"],
+            base_classes["datasetbreakdown"],
         )
 
     flipped_classes = base_classes.copy()
@@ -438,27 +456,21 @@ def update_metric_detail(active_metric, hovered_card):
         "datasets": [
             html.H3("Datasets"),
             html.P(
-                "This metric reports the total number of datasets included in the dashboard corpus. "
-                "It establishes the scale of the comparison and gives context for the percentages and averages shown throughout the dashboard."
-            ),
-            html.P(
-                "Because the analysis covers thousands of datasets, the patterns shown here should be interpreted as broad documentation tendencies rather than isolated examples."
+                "This metric reports the total number of dataset records included in the dashboard corpus. "
+                "Because the analysis covers thousands of records, the patterns shown here should be interpreted as broad documentation tendencies rather than isolated examples."
             ),
         ],
         "modalities": [
             html.H3("Modalities"),
             html.P(
-                "This metric identifies the three media types included in the study: text, speech, and video. "
-                "These are the main comparison groups used throughout the dashboard."
-            ),
-            html.P(
-                "This matters because documentation norms often differ by data type, so the dashboard is built to compare those differences directly."
+                "The dataset includes three modalities: text, speech, and video. "
+                "Documentation norms may differ by data type."
             ),
         ],
         "hfdata": [
             html.H3("With HF download data"),
             html.P(
-                "This metric shows how many datasets have observable Hugging Face download counts available. "
+                "This metric shows how many dataset records have observable Hugging Face download counts available. "
                 "Those counts are used here as one practical visibility signal."
             ),
             html.P(
@@ -468,11 +480,21 @@ def update_metric_detail(active_metric, hovered_card):
         "docscore": [
             html.H3("Mean documentation score"),
             html.P(
-                "This metric summarizes the average share of key metadata fields documented across datasets in the corpus. "
+                "This metric summarizes the average share of key metadata fields documented across dataset records in the corpus. "
                 "It offers a compact view of overall documentation visibility."
             ),
             html.P(
                 "Higher values suggest that more datasets visibly report metadata such as sources, licenses, creators, and related provenance information."
+            ),
+        ],
+        "datasetbreakdown": [
+            html.H3("Dataset records by modality"),
+            html.P(
+                "This metric breaks the audited corpus into text, speech, and video records. "
+                "It shows the underlying composition of the dashboard and helps explain why some aggregate patterns may be shaped by the relative size of each modality."
+            ),
+            html.P(
+                f"The current breakdown is {metrics['dataset_breakdown']}."
             ),
         ],
     }
@@ -484,6 +506,7 @@ def update_metric_detail(active_metric, hovered_card):
         flipped_classes["modalities"],
         flipped_classes["hfdata"],
         flipped_classes["docscore"],
+        flipped_classes["datasetbreakdown"],
     )
 
 
@@ -497,3 +520,4 @@ def update_visibility_docflag(selected_flag: str):
 
 if __name__ == "__main__":
     app.run(debug=True)
+    

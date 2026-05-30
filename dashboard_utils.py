@@ -143,8 +143,8 @@ def apply_styles() -> str:
 
     .metric-card {{
         position: relative;
-        min-height: 150px;
-        height: 150px;
+        # min-height: 150px;
+        height: 100px;
         perspective: 1200px;
         background: transparent;
         border: none;
@@ -201,7 +201,7 @@ def apply_styles() -> str:
     }}
 
     .metric-value {{
-        font-size: 1.55rem;
+        font-size: 1rem;
         letter-spacing: -0.02em;
         line-height: 1.15;
         font-weight: 400;
@@ -209,10 +209,10 @@ def apply_styles() -> str:
 
     .metric-back-text {{
         margin: 4px 0 0;
-        font-size: 0.9rem;
+        font-size: 0.2rem;
         line-height: 1.45;
         color: var(--text);
-        font-weight: 400;
+        font-weight: 200;
     }}
 
     .metric-read-more {{
@@ -608,11 +608,24 @@ def top_metrics(data: Dict[str, pd.DataFrame]) -> Dict[str, str]:
     n_with_hf = int(df["hf_downloads"].notna().sum()) if "hf_downloads" in df.columns else 0
     modalities = ", ".join([m for m in MODALITY_ORDER if m in set(df["modality"].astype(str))])
     mean_doc = df["documentation_score_raw"].mean() if "documentation_score_raw" in df.columns else float("nan")
+
+    modality_counts = (
+        df["modality"]
+        .fillna("unknown")
+        .astype(str)
+        .str.lower()
+        .value_counts()
+    )
+    text_count = int(modality_counts.get("text", 0))
+    speech_count = int(modality_counts.get("speech", 0))
+    video_count = int(modality_counts.get("video", 0))
+
     return {
         "datasets": f"{n_total:,}",
         "modalities": modalities or "text, speech, video",
         "hf_data": f"{n_with_hf:,}",
         "mean_doc": f"{mean_doc:.2f}" if pd.notna(mean_doc) else "—",
+        "dataset_breakdown": f"Text: {text_count:,} · Speech: {speech_count:,} · Video: {video_count:,}",
     }
 
 
