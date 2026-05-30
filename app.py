@@ -84,9 +84,10 @@ app.layout = html.Div(
                     children=[
                         html.H1("Multimodal Dataset Provenance Dashboard"),
                         html.P(
-                            "This dashboard compares what dataset summaries visibly document across text, speech, "
-                            "and video corpora. It focuses on documentation coverage, Hugging Face visibility, "
-                            "and policy-relevant metadata gaps."
+                            "This dashboard analyses data available from the Data Provenance Initiative, which is linked below. "
+                            "It explores how openly available text, speech, and video datasets describe where their data comes from and how it can be used. "
+                            "It summarizes documentation coverage for key fields like licenses, creators, sources, and tasks, and compares how these patterns differ across modalities. "
+                            "The goal is to give practitioners and policymakers a quick way to understand the dataset produced by the initiative, which will help answer questions related to the ecosystem's transparency and responsible AI development. "
                         ),
                     ],
                 ),
@@ -94,14 +95,28 @@ app.layout = html.Div(
                     className="section hero-section",
                     children=[
                         html.H2("What is data provenance?"),
-                        html.P("Add your body paragraph here."),
-                        html.A(
-                            "Visit the Data Provenance Initiative",
-                            href="https://www.dataprovenance.org/",
-                            target="_blank",
-                            rel="noopener noreferrer",
-                            className="hero-button",
+                        html.P("Data provenance describes the “story” of a dataset: where its contents came from, how they were collected or generated, how they were transformed, and under what terms they can be used. Provenance includes not just web domains or platforms (like Wikipedia or YouTube), but also licensing, geographic and linguistic coverage, human annotation, and relationships between derived datasets and their sources. Provenance makes it possible to trace training data back to its origins, assess legal and ethical risks, and understand over- or under-represented data in AI systems. Weak or missing provenance may obscure restrictions, amplify existing skews in who is represented, and make it harder to build accountable and inclusive models."),
+                        html.P([
+                            "In order to address this problem, the Data Provenance Initiative ",
+                            html.Strong("audited over 1800 datasets"),
+                            ", tracing their sources, licenses, creators, and uses, and released an open dataset and interactive Explorer tool so practitioners can filter, inspect, and document training data with much stronger accountability."
+                        ]), 
+                        html.Div(
+                            html.A(
+                                "Visit the Data Provenance Initiative",
+                                href="https://www.dataprovenance.org/",
+                                target="_blank",
+                                rel="noopener noreferrer",
+                                className="hero-button",
+                            ),
+                            style={"display": "flex", "justifyContent": "center", "marginTop": "18px"},
                         ),
+                        html.Br(),
+                        html.Br(),
+                        html.H2("Our Goal"),
+                        html.P([
+                            "We extend their work by comparing provenance across modalities. We look at where documentation is strongest and which policy‑relevant fields are missing or underspecified in the dataset records."
+                        ]), 
                     ],
                 ),
                 html.Section(
@@ -482,4 +497,3 @@ def update_visibility_docflag(selected_flag: str):
 
 if __name__ == "__main__":
     app.run(debug=True)
-    

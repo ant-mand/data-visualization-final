@@ -8,17 +8,17 @@ mainly figuring out how to work with Plotly.
 from __future__ import annotations
 
 import os
+import textwrap
 from typing import Dict, List
 
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-import textwrap
 from dash import html
 
 
 COLORS: Dict[str, str] = {
-    "background": "#7D0000",
+    "background": "#ffffff",
     "surface": "#ffffff",
     "surface_alt": "#f2ebe3",
     "text": "#111111",
@@ -118,7 +118,7 @@ def apply_styles() -> str:
 
     .hero-section p {{
         margin: 0;
-        max-width: 95ch;
+        max-width: 105ch;
         color: var(--muted);
         font-size: 1.04rem;
         line-height: 1.65;
@@ -173,7 +173,7 @@ def apply_styles() -> str:
         display: flex;
         flex-direction: column;
         border-radius: 16px;
-        border: 2px solid var(--border);
+        border: 1px solid var(--border);
         box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
         backface-visibility: hidden;
         -webkit-backface-visibility: hidden;
@@ -272,9 +272,8 @@ def apply_styles() -> str:
     .section {{
         margin-top: 28px;
         background: var(--surface);
-        border: 1px solid var(--border);
-        border-radius: 22px;
-        padding: 24px 20px;
+        border: none;
+        padding: 10px 20px;
     }}
 
     .section h2 {{
@@ -369,6 +368,7 @@ def apply_styles() -> str:
         cursor: pointer !important;
     }}
     """
+
 
 def wrap_axis_label(text: str, width: int = 18) -> str:
     return "<br>".join(textwrap.wrap(str(text), width=width, break_long_words=False))
@@ -500,7 +500,7 @@ def split_multi_value(series: pd.Series) -> pd.Series:
     return (
         series.fillna("")
         .astype(str)
-        .str.split(r"[;,]")
+        .str.split(r"[|;,]")
         .explode()
         .str.strip()
     )
@@ -548,6 +548,57 @@ def top_terms_figure(
     )
     fig.update_xaxes(rangemode="tozero", fixedrange=True)
     return base_figure(fig, height=500)
+
+
+def full_terms_figure(
+    df: pd.DataFrame,
+    column: str,
+    modality: str,
+    title: str,
+) -> go.Figure:
+    d = df[df["modality"] == modality].copy()
+    values = split_multi_value(d[column])
+    values = values[(values != "") & (values.str.lower() != "nan")]
+
+    counts = values.value_counts().reset_index()
+    counts.columns = ["label", "n_datasets"]
+    counts = counts.sort_values(
+        ["n_datasets", "label"],
+        ascending=[False, True],
+    ).copy()
+
+    plot_counts = counts.iloc[::-1].copy()
+
+    fig = px.bar(
+        plot_counts,
+        x="n_datasets",
+        y="label",
+        orientation="h",
+        labels={"n_datasets": "Datasets", "label": ""},
+        title=title,
+    )
+    fig.update_traces(
+        hovertemplate="<b>%{y}</b><br>Datasets: %{x}<extra></extra>",
+        marker_line_width=0,
+    )
+    fig.update_layout(
+        bargap=0.12,
+        showlegend=False,
+        margin=dict(l=260, r=24, t=56, b=44),
+    )
+    fig.update_yaxes(
+        categoryorder="array",
+        categoryarray=plot_counts["label"].tolist(),
+        tickfont=dict(size=11),
+        ticks="outside",
+        ticklen=4,
+        ticklabelstandoff=8,
+        fixedrange=True,
+    )
+    fig.update_xaxes(rangemode="tozero", fixedrange=True)
+
+    height = max(520, min(1400, 26 * len(plot_counts) + 120))
+    return base_figure(fig, height=height)
 
 
 def top_metrics(data: Dict[str, pd.DataFrame]) -> Dict[str, str]:
@@ -702,8 +753,8 @@ def documentation_detail_figure(
         return base_figure(fig, height=520)
 
     if field == "has_creators":
-        fig = top_terms_figure(
-            provenance[provenance["hascreators"] == 1],
+        fig = full_terms_figure(
+            provenance[provenance["has_creators"] == 1],
             "creators",
             modality,
             short_title,
@@ -713,8 +764,8 @@ def documentation_detail_figure(
 
     if field == "has_sources":
         fig = top_terms_figure(
-            provenance[provenance["hassources"] == 1],
-            "textsources",
+            provenance[provenance["has_sources"] == 1],
+            "text_sources",
             modality,
             short_title,
         )
@@ -723,7 +774,7 @@ def documentation_detail_figure(
 
     if field == "has_tasks":
         fig = top_terms_figure(
-            provenance[provenance["hastasks"] == 1],
+            provenance[provenance["has_tasks"] == 1],
             "tasks",
             modality,
             short_title,
