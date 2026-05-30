@@ -1,0 +1,277 @@
+:root {
+    --bg: #ffffff;
+    --surface: #ffffff;
+    --surface-alt: #f2ebe3;
+    --text: #111111;
+    --muted: #111111;
+    --border: #ded6cc;
+    --accent: #1f3a5f;
+    --font-sans: 'Source Sans 3', 'Helvetica Neue', Arial, sans-serif;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    line-height: 1.6;
+    font-weight: 400;
+}
+
+.app-shell {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 6px 20px 64px;
+}
+
+.hero-wrap {
+    margin-bottom: 8px;
+}
+
+.hero-section {
+    padding-top: 22px;
+    padding-bottom: 24px;
+}
+
+.hero-section h1 {
+    margin: 0 0 12px;
+    font-size: clamp(2.3rem, 4vw, 4.25rem);
+    line-height: 1.04;
+    letter-spacing: -0.03em;
+    font-weight: 400;
+}
+
+.hero-section p {
+    margin: 0;
+    max-width: 105ch;
+    color: var(--muted);
+    font-size: 1.04rem;
+    line-height: 1.65;
+    font-weight: 400;
+}
+
+.hero-metrics {
+    margin-top: 24px;
+}
+
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 14px;
+    margin: 0;
+    align-items: stretch;
+}
+
+.metric-card-wrap {
+    min-width: 0;
+}
+
+.metric-card {
+    position: relative;
+    height: 150px;
+    perspective: 1200px;
+    background: transparent;
+    border: none;
+    padding: 0;
+    box-shadow: none;
+}
+
+.flip-card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transform-style: preserve-3d;
+    transition: transform 0.45s ease;
+}
+
+.metric-card:hover .flip-card-inner,
+.metric-card:focus-within .flip-card-inner,
+.metric-card.is-flipped .flip-card-inner {
+    transform: rotateY(180deg);
+}
+
+.flip-card-front,
+.flip-card-back {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    overflow: hidden;
+    padding: 14px 16px;
+}
+
+.flip-card-front {
+    background: var(--surface-alt);
+    justify-content: flex-start;
+}
+
+.flip-card-back {
+    background: var(--surface);
+    transform: rotateY(180deg);
+    justify-content: flex-start;
+}
+
+.metric-label {
+    color: var(--muted);
+    font-size: 0.8rem;
+    margin-bottom: 4px;
+    font-weight: 400;
+    line-height: 1.3;
+}
+
+.metric-value {
+    font-size: 1.15rem;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+    font-weight: 400;
+    margin-top: auto;
+    margin-bottom: auto;
+}
+
+.metric-back-text {
+    margin: 2px 0 0;
+    font-size: 0.68rem;
+    line-height: 1.3;
+    color: var(--text);
+    font-weight: 400;
+}
+
+.metric-read-more {
+    margin-top: auto;
+    align-self: flex-start;
+    background: transparent;
+    border: none;
+    padding: 0;
+    color: var(--accent);
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: var(--font-sans);
+    line-height: 1.2;
+}
+
+.metric-read-more:hover {
+    text-decoration: underline;
+}
+
+.metric-read-more:focus-visible,
+.hero-button:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
+.metric-detail-panel {
+    margin-top: 16px;
+    background: var(--surface-alt);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 16px 18px 14px;
+}
+
+.metric-detail-panel.hidden {
+    display: none;
+}
+
+.metric-detail-panel h3 {
+    margin: 0 0 6px;
+    font-size: 1.05rem;
+    font-weight: 600;
+}
+
+.metric-detail-panel p {
+    margin: 0 0 8px;
+    max-width: none;
+    color: var(--text);
+    line-height: 1.55;
+    font-size: 0.95rem;
+}
+
+.metric-detail-panel p:last-child {
+    margin-bottom: 0;
+}
+
+.section {
+    margin-top: 28px;
+    background: var(--surface);
+    border: none;
+    padding: 10px 20px;
+}
+
+.section h2 {
+    margin: 0 0 8px;
+    font-size: 1.4rem;
+    letter-spacing: -0.01em;
+    font-weight: 600;
+}
+
+.section .desc {
+    margin: 0 0 16px;
+    color: var(--muted);
+    max-width: 75ch;
+    font-weight: 400;
+}
+
+.controls-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 14px;
+    align-items: center;
+}
+
+.detail-subhead {
+    display: flex;
+    align-items: center;
+    min-height: 38px;
+    color: var(--text);
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.hero-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 18px;
+    padding: 10px 16px;
+    border-radius: 999px;
+    border: 1px solid var(--accent);
+    background: var(--accent);
+    color: #ffffff;
+    text-decoration: none;
+    font-size: 0.95rem;
+    font-weight: 600;
+    line-height: 1.2;
+    transition: background 0.2s ease, border-color 0.2s ease, opacity 0.2s ease;
+}
+
+.hero-button:hover {
+    background: #2a4a74;
+    border-color: #2a4a74;
+}
+
+.js-plotly-plot,
+.js-plotly-plot *,
+.js-plotly-plot .plotly,
+.js-plotly-plot .svg-container,
+.js-plotly-plot .main-svg,
+.js-plotly-plot .draglayer,
+.js-plotly-plot .cursor-crosshair,
+.js-plotly-plot .cursor-move,
+.js-plotly-plot .cursor-ew-resize,
+.js-plotly-plot .cursor-ns-resize,
+.js-plotly-plot .nsewdrag,
+.js-plotly-plot .nsdrag,
+.js-plotly-plot .ewdrag {
+    cursor: pointer !important;
+}

@@ -4,7 +4,6 @@ from dash import Dash, Input, Output, State, dcc, html, dash_table, callback_con
 from dash_extensions import EventListener
 
 from dashboard_utils import (
-    apply_styles,
     documentation_detail_figure,
     documentation_figure,
     load_data,
@@ -25,25 +24,24 @@ data = load_data()
 metrics = top_metrics(data)
 license_table_df = raw_license_table(data["licenses_raw_examples"])
 
-app.index_string = f"""
+app.index_string = """
 <!DOCTYPE html>
 <html>
     <head>
-        {{%metas%}}
-        <title>{{%title%}}</title>
-        {{%favicon%}}
-        {{%css%}}
+        {%metas%}
+        <title>{%title%}</title>
+        {%favicon%}
+        {%css%}
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
-        <style>{apply_styles()}</style>
     </head>
     <body>
-        {{%app_entry%}}
+        {%app_entry%}
         <footer>
-            {{%config%}}
-            {{%scripts%}}
-            {{%renderer%}}
+            {%config%}
+            {%scripts%}
+            {%renderer%}
         </footer>
     </body>
 </html>
@@ -150,12 +148,6 @@ app.layout = html.Div(
                                             "Modalities Represented",
                                             metrics["modalities"],
                                             "Modalities represented in the dataset.",
-                                        ),
-                                        wrapped_metric_card(
-                                            "docscore",
-                                            "Avg. visibility of key metadata fields across datasets",
-                                            metrics["mean_doc"],
-                                            "Average visibility of key metadata fields across datasets.",
                                         ),
                                         wrapped_metric_card(
                                             "datasetbreakdown",
@@ -356,11 +348,10 @@ def render_documentation_view(view_state):
     Input("datasets-listener", "event"),
     Input("modalities-listener", "event"),
     Input("hfdata-listener", "event"),
-    Input("docscore-listener", "event"),
     Input("datasetbreakdown-listener", "event"),
     prevent_initial_call=True,
 )
-def track_hover(datasets_event, modalities_event, hfdata_event, docscore_event, datasetbreakdown_event):
+def track_hover(datasets_event, modalities_event, hfdata_event, datasetbreakdown_event):
     triggered = callback_context.triggered
     if not triggered:
         return ""
@@ -370,7 +361,6 @@ def track_hover(datasets_event, modalities_event, hfdata_event, docscore_event, 
         "datasets-listener": datasets_event,
         "modalities-listener": modalities_event,
         "hfdata-listener": hfdata_event,
-        "docscore-listener": docscore_event,
         "datasetbreakdown-listener": datasetbreakdown_event,
     }.get(trigger_id)
 
@@ -378,7 +368,6 @@ def track_hover(datasets_event, modalities_event, hfdata_event, docscore_event, 
         "datasets-listener": "datasets",
         "modalities-listener": "modalities",
         "hfdata-listener": "hfdata",
-        "docscore-listener": "docscore",
         "datasetbreakdown-listener": "datasetbreakdown",
     }
 
@@ -398,11 +387,10 @@ def track_hover(datasets_event, modalities_event, hfdata_event, docscore_event, 
     Input("datasets-more", "n_clicks"),
     Input("modalities-more", "n_clicks"),
     Input("hfdata-more", "n_clicks"),
-    Input("docscore-more", "n_clicks"),
     Input("datasetbreakdown-more", "n_clicks"),
     prevent_initial_call=True,
 )
-def set_active_metric(datasets_more, modalities_more, hfdata_more, docscore_more, datasetbreakdown_more):
+def set_active_metric(datasets_more, modalities_more, hfdata_more, datasetbreakdown_more):
     triggered = callback_context.triggered
     if not triggered:
         return ""
@@ -412,7 +400,6 @@ def set_active_metric(datasets_more, modalities_more, hfdata_more, docscore_more
         "datasets-more": "datasets",
         "modalities-more": "modalities",
         "hfdata-more": "hfdata",
-        "docscore-more": "docscore",
         "datasetbreakdown-more": "datasetbreakdown",
     }
     return mapping.get(trigger_id, "")
@@ -424,7 +411,6 @@ def set_active_metric(datasets_more, modalities_more, hfdata_more, docscore_more
     Output("datasets-card", "className"),
     Output("modalities-card", "className"),
     Output("hfdata-card", "className"),
-    Output("docscore-card", "className"),
     Output("datasetbreakdown-card", "className"),
     Input("active-metric-store", "data"),
     Input("hovered-card-store", "data"),
@@ -434,7 +420,6 @@ def update_metric_detail(active_metric, hovered_card):
         "datasets": "metric-card",
         "modalities": "metric-card",
         "hfdata": "metric-card",
-        "docscore": "metric-card",
         "datasetbreakdown": "metric-card",
     }
 
@@ -445,7 +430,6 @@ def update_metric_detail(active_metric, hovered_card):
             base_classes["datasets"],
             base_classes["modalities"],
             base_classes["hfdata"],
-            base_classes["docscore"],
             base_classes["datasetbreakdown"],
         )
 
@@ -472,26 +456,13 @@ def update_metric_detail(active_metric, hovered_card):
             html.P(
                 "This metric shows how many dataset records have observable Hugging Face download counts available. "
                 "Those counts are used here as one practical visibility signal."
-            ),
-            html.P(
                 "This should not be treated as a measure of quality or fairness. Instead, it indicates which datasets are more visible or more actively circulating on a major platform."
-            ),
-        ],
-        "docscore": [
-            html.H3("Mean documentation score"),
-            html.P(
-                "This metric summarizes the average share of key metadata fields documented across dataset records in the corpus. "
-                "It offers a compact view of overall documentation visibility."
-            ),
-            html.P(
-                "Higher values suggest that more datasets visibly report metadata such as sources, licenses, creators, and related provenance information."
             ),
         ],
         "datasetbreakdown": [
             html.H3("Dataset records by modality"),
             html.P(
                 "This metric breaks the audited corpus into text, speech, and video records. "
-                "It shows the underlying composition of the dashboard and helps explain why some aggregate patterns may be shaped by the relative size of each modality."
             ),
             html.P(
                 f"The current breakdown is {metrics['dataset_breakdown']}."
@@ -505,7 +476,6 @@ def update_metric_detail(active_metric, hovered_card):
         flipped_classes["datasets"],
         flipped_classes["modalities"],
         flipped_classes["hfdata"],
-        flipped_classes["docscore"],
         flipped_classes["datasetbreakdown"],
     )
 
@@ -520,4 +490,3 @@ def update_visibility_docflag(selected_flag: str):
 
 if __name__ == "__main__":
     app.run(debug=True)
-    
