@@ -18,10 +18,10 @@ from dash import html
 COLORS: Dict[str, str] = {
     "background": "#ffffff",
     "surface": "#ffffff",
-    "surface_alt": "#f2ebe3",
+    "surface_alt": "#e3eff2",
     "text": "#111111",
     "muted_text": "#111111",
-    "border": "#ded6cc",
+    "border": "#f3f3f3",
     "text_modality": "#9E003A",
     "speech_modality": "#2F009E",
     "video_modality": "#217D00",
@@ -50,15 +50,15 @@ MODALITY_COLORS: Dict[str, str] = {
     "video": COLORS["video_modality"],
 }
 
-LICENSE_COLORS: Dict[str, str] = {
-    "Permissive": "#315c8d",
-    "Copyleft / Share-Alike": "#4f7cac",
-    "Non-Commercial": "#b85c38",
-    "Model-Restricted": "#7a3e65",
-    "Custom/Restricted": "#8c5a2b",
-    "Other": "#7b8794",
-    "Unspecified": "#b8bfc7",
-}
+# LICENSE_COLORS: Dict[str, str] = {
+#     "Permissive": "#315c8d",
+#     "Copyleft / Share-Alike": "#4f7cac",
+#     "Non-Commercial": "#b85c38",
+#     "Model-Restricted": "#7a3e65",
+#     "Custom/Restricted": "#8c5a2b",
+#     "Other": "#7b8794",
+#     "Unspecified": "#b8bfc7",
+# }
 
 
 def wrap_axis_label(text: str, width: int = 18) -> str:
@@ -276,10 +276,10 @@ def top_metrics(data: Dict[str, pd.DataFrame]) -> Dict[str, str]:
 
     return {
         "datasets": f"{n_total:,}",
-        "modalities": modalities or "text, speech, video",
+        "modalities": "Text, Speech, Video",
         "hf_data": f"{n_with_hf:,}",
         "mean_doc": f"{mean_doc:.2f}" if pd.notna(mean_doc) else "—",
-        "dataset_breakdown": f"Text: {text_count:,} · Speech: {speech_count:,} · Video: {video_count:,}",
+        "dataset_breakdown": f"Text: {text_count:,} | Speech: {speech_count:,} | Video: {video_count:,}",
     }
 
 

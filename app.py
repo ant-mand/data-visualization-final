@@ -135,12 +135,6 @@ app.layout = html.Div(
                                             "# of dataset records analyzed.",
                                         ),
                                         wrapped_metric_card(
-                                            "hfdata",
-                                            "# of datasets with Hugging Face (HF) download data",
-                                            metrics["hf_data"],
-                                            "# of datasets with data on HF downloads.",
-                                        ),
-                                        wrapped_metric_card(
                                             "modalities",
                                             "Modalities Represented",
                                             metrics["modalities"],
@@ -151,6 +145,12 @@ app.layout = html.Div(
                                             "Dataset records by modality",
                                             metrics["dataset_breakdown"],
                                             "Count of audited dataset records for text, speech, and video.",
+                                        ),
+                                        wrapped_metric_card(
+                                            "hfdata",
+                                            "# of datasets with Hugging Face (HF) download data",
+                                            metrics["hf_data"],
+                                            "# of datasets with data on HF downloads.",
                                         ),
                                     ],
                                 ),
@@ -167,7 +167,7 @@ app.layout = html.Div(
         ),
         section(
             "Documentation coverage",
-            "Click a bar to drill into what is documented for that modality and field. Click a legend item to filter to one modality.",
+            "Click bar to drill into documentation by modality. Filter modality type using legend.",
             [
                 html.Div(
                     className="controls-row",

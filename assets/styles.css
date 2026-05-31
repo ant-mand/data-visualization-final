@@ -1,10 +1,10 @@
 :root {
     --bg: #ffffff;
     --surface: #ffffff;
-    --surface-alt: #f2ebe3;
+    --surface-alt: #e3eff2;
     --text: #111111;
     --muted: #111111;
-    --border: #ded6cc;
+    --border: #f3f3f3;
     --accent: #1f3a5f;
     --font-sans: 'Source Sans 3', 'Helvetica Neue', Arial, sans-serif;
 }
