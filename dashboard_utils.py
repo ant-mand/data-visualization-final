@@ -1,9 +1,6 @@
+
 """
 Utilities for loading dashboard data and building shared dashboard components.
-
-AI DISCLOSURE: docstrings written by Perplexity with revision.
-Perplexity also helped me with the drilldown feature for the documentation & license view,
-mainly figuring out how to work with Plotly.
 """
 
 from __future__ import annotations
@@ -69,7 +66,6 @@ def wrap_axis_label(text: str, width: int = 18) -> str:
 
 
 def project_paths() -> Dict[str, str]:
-    """Return the project paths the dashboard uses to find source and derived data."""
     project_root = os.path.dirname(os.path.abspath(__file__))
     data_dir = os.path.join(project_root, "data")
     derived_dir = os.path.join(data_dir, "derived")
@@ -92,14 +88,12 @@ def project_paths() -> Dict[str, str]:
 
 
 def load_csv(path: str) -> pd.DataFrame:
-    """Load one CSV and fail loudly if the expected file is missing."""
     if not os.path.isfile(path):
         raise FileNotFoundError(f"Required file not found: {path}")
     return pd.read_csv(path)
 
 
 def load_data() -> Dict[str, pd.DataFrame]:
-    """Load the full set of dashboard input tables from the data directory."""
     paths = project_paths()
     return {
         "provenance": load_csv(paths["provenance"]),
@@ -117,7 +111,6 @@ def load_data() -> Dict[str, pd.DataFrame]:
 
 
 def metric_card(card_id: str, label: str, value: str, short_blurb: str) -> html.Div:
-    """Build a hover-flip metric card with a clickable read-more control."""
     return html.Div(
         id=f"{card_id}-card",
         className="metric-card",
@@ -152,7 +145,6 @@ def metric_card(card_id: str, label: str, value: str, short_blurb: str) -> html.
 
 
 def section(title: str, description: str, children: List) -> html.Section:
-    """Wrap a dashboard section with a shared title, description, and content block."""
     return html.Section(
         className="section",
         children=[
@@ -164,18 +156,19 @@ def section(title: str, description: str, children: List) -> html.Section:
 
 
 def base_figure(fig: go.Figure, height: int = 460) -> go.Figure:
-    """Apply the shared Plotly layout used across dashboard figures."""
     fig.update_layout(
         height=height,
         paper_bgcolor=COLORS["surface"],
         plot_bgcolor=COLORS["surface"],
         font=dict(family=FONT_SANS, color=COLORS["text"], size=12),
-        margin=dict(l=170, r=24, t=56, b=44),
+        margin=dict(l=170, r=24, t=72, b=44),
         legend=dict(
             orientation="h",
-            y=-0.18,
-            x=0.5,
-            xanchor="center",
+            y=1.10,
+            x=1,
+            xanchor="right",
+            yanchor="bottom",
+            traceorder="reversed",
             font=dict(family=FONT_SANS, size=11),
         ),
         transition=dict(duration=300, easing="cubic-in-out"),
@@ -200,13 +193,7 @@ def split_multi_value(series: pd.Series) -> pd.Series:
     )
 
 
-def top_terms_figure(
-    df: pd.DataFrame,
-    column: str,
-    modality: str,
-    title: str,
-    top_n: int = 12,
-) -> go.Figure:
+def top_terms_figure(df: pd.DataFrame, column: str, modality: str, title: str, top_n: int = 12) -> go.Figure:
     d = df[df["modality"] == modality].copy()
     values = split_multi_value(d[column])
     values = values[(values != "") & (values.str.lower() != "nan")]
@@ -222,15 +209,8 @@ def top_terms_figure(
         labels={"n_datasets": "Datasets", "label": ""},
         title=title,
     )
-    fig.update_traces(
-        hovertemplate="Datasets: %{x}<extra></extra>",
-        marker_line_width=0,
-    )
-    fig.update_layout(
-        bargap=0.18,
-        showlegend=False,
-        margin=dict(l=220, r=24, t=56, b=44),
-    )
+    fig.update_traces(hovertemplate="Datasets: %{x}<extra></extra>", marker_line_width=0)
+    fig.update_layout(bargap=0.18, showlegend=False, margin=dict(l=220, r=24, t=56, b=44))
     fig.update_yaxes(
         categoryorder="array",
         categoryarray=counts["label"].tolist(),
@@ -244,23 +224,14 @@ def top_terms_figure(
     return base_figure(fig, height=500)
 
 
-def full_terms_figure(
-    df: pd.DataFrame,
-    column: str,
-    modality: str,
-    title: str,
-) -> go.Figure:
+def full_terms_figure(df: pd.DataFrame, column: str, modality: str, title: str) -> go.Figure:
     d = df[df["modality"] == modality].copy()
     values = split_multi_value(d[column])
     values = values[(values != "") & (values.str.lower() != "nan")]
 
     counts = values.value_counts().reset_index()
     counts.columns = ["label", "n_datasets"]
-    counts = counts.sort_values(
-        ["n_datasets", "label"],
-        ascending=[False, True],
-    ).copy()
-
+    counts = counts.sort_values(["n_datasets", "label"], ascending=[False, True]).copy()
     plot_counts = counts.iloc[::-1].copy()
 
     fig = px.bar(
@@ -275,11 +246,7 @@ def full_terms_figure(
         hovertemplate="<b>%{y}</b><br>Datasets: %{x}<extra></extra>",
         marker_line_width=0,
     )
-    fig.update_layout(
-        bargap=0.12,
-        showlegend=False,
-        margin=dict(l=260, r=24, t=56, b=44),
-    )
+    fig.update_layout(bargap=0.12, showlegend=False, margin=dict(l=260, r=24, t=56, b=44))
     fig.update_yaxes(
         categoryorder="array",
         categoryarray=plot_counts["label"].tolist(),
@@ -296,121 +263,94 @@ def full_terms_figure(
 
 
 def top_metrics(data: Dict[str, pd.DataFrame]) -> Dict[str, str]:
-    """Compute the top-line metrics shown in the dashboard header."""
     df = data["provenance"]
     n_total = len(df)
     n_with_hf = int(df["hf_downloads"].notna().sum()) if "hf_downloads" in df.columns else 0
     modalities = ", ".join([m for m in MODALITY_ORDER if m in set(df["modality"].astype(str))])
     mean_doc = df["documentation_score_raw"].mean() if "documentation_score_raw" in df.columns else float("nan")
 
-    modality_counts = (
-        df["modality"]
-        .fillna("unknown")
-        .astype(str)
-        .str.lower()
-        .value_counts()
-    )
+    modality_counts = df["modality"].fillna("unknown").astype(str).str.lower().value_counts()
     text_count = int(modality_counts.get("text", 0))
     speech_count = int(modality_counts.get("speech", 0))
     video_count = int(modality_counts.get("video", 0))
 
     return {
         "datasets": f"{n_total:,}",
-        "modalities": "Text, Speech, Video",
+        "modalities": modalities or "text, speech, video",
         "hf_data": f"{n_with_hf:,}",
         "mean_doc": f"{mean_doc:.2f}" if pd.notna(mean_doc) else "—",
-        "dataset_breakdown": f"Text: {text_count:,}, Speech: {speech_count:,}, Video: {video_count:,}",
+        "dataset_breakdown": f"Text: {text_count:,} · Speech: {speech_count:,} · Video: {video_count:,}",
     }
 
 
 def documentation_figure(doc_long: pd.DataFrame) -> go.Figure:
-    field_order = sorted([
-        "License documented",
-        "Creators documented",
-        "Sources documented",
-        "Tasks documented",
-        "Human annotation flag documented",
-        "Parent datasets documented",
-        "Generating models documented",
-        "HF URL present",
-        "Paper URL present",
-        "Year present",
-    ])
+    field_order = [
+        "Licenses",
+        "Creators",
+        "Sources",
+        "Tasks",
+        "Human Annotation Flag",
+        "Parent Datasets",
+        "Generating Models",
+        "HF URL",
+        "Paper URL",
+        "Year",
+    ]
+
+    rename_map = {
+        "License documented": "Licenses",
+        "Creators documented": "Creators",
+        "Sources documented": "Sources",
+        "Tasks documented": "Tasks",
+        "Human annotation flag documented": "Human Annotation Flag",
+        "Parent datasets documented": "Parent Datasets",
+        "Generating models documented": "Generating Models",
+        "HF URL present": "HF URL",
+        "Paper URL present": "Paper URL",
+        "Year present": "Year",
+    }
 
     d = doc_long.copy()
+    d["field_label"] = d["field_label"].replace(rename_map)
     d = d[d["field_label"].isin(field_order)].copy()
-
     d["field_label"] = pd.Categorical(d["field_label"], categories=field_order, ordered=True)
+    d["modality"] = pd.Categorical(d["modality"], categories=MODALITY_ORDER, ordered=True)
+    d = d.sort_values(["field_label", "modality"]).copy()
 
-    d["modality_rank"] = (
-        d.groupby("field_label")["coverage_pct"]
-        .rank(method="first", ascending=False)
+    fig = px.bar(
+        d,
+        x="coverage_pct",
+        y="field_label",
+        color="modality",
+        barmode="group",
+        category_orders={
+            "modality": MODALITY_ORDER,
+            "field_label": field_order,
+        },
+        color_discrete_map=MODALITY_COLORS,
+        labels={"coverage_pct": "Coverage (%)", "field_label": ""},
+        custom_data=["modality", "field", "field_label", "n_datasets"],
     )
 
-    offsets = {1.0: -0.26, 2.0: 0.0, 3.0: 0.26}
-    d["field_index"] = d["field_label"].cat.codes.astype(float)
-    d["y_pos"] = d["field_index"] + d["modality_rank"].map(offsets).fillna(0.0)
-
-    d = d.sort_values(["field_label", "modality_rank", "modality"]).copy()
-
-    fig = go.Figure()
-
-    for modality in MODALITY_ORDER:
-        dm = d[d["modality"] == modality].copy()
-        fig.add_trace(
-            go.Bar(
-                x=dm["coverage_pct"],
-                y=dm["y_pos"],
-                orientation="h",
-                name=modality,
-                marker=dict(
-                    color=MODALITY_COLORS.get(modality, COLORS["accent"]),
-                    line=dict(width=0),
-                ),
-                width=0.22,
-                customdata=dm[["modality", "field", "field_label", "n_datasets", "coverage_pct"]].to_numpy(),
-                hovertemplate=(
-                    "<b>%{customdata[2]}</b><br>"
-                    "Modality: %{customdata[0]}<br>"
-                    "Coverage: %{x:.1f}%<br>"
-                    "Datasets: %{customdata[3]}<extra></extra>"
-                ),
-            )
+    fig.update_traces(
+        hovertemplate=(
+            "<b>%{customdata[2]}</b><br>"
+            "Modality: %{customdata[0]}<br>"
+            "Coverage: %{x:.1f}%<br>"
+            "Datasets: %{customdata[3]}<extra></extra>"
         )
+    )
 
     fig.update_layout(
         title="Documentation coverage",
-        barmode="overlay",
         clickmode="event+select",
-        bargap=0.38,
-        margin=dict(l=250, r=24, t=56, b=44),
-        showlegend=True,
+        yaxis={
+            "categoryorder": "array",
+            "categoryarray": field_order[::-1],
+        },
     )
 
-    fig.update_xaxes(
-        title="Coverage (%)",
-        range=[0, 100],
-        ticksuffix="%",
-        fixedrange=True,
-        showgrid=False,
-        linecolor=COLORS["border"],
-    )
-
-    fig.update_yaxes(
-        title="",
-        tickmode="array",
-        tickvals=list(range(len(field_order))),
-        ticktext=[wrap_axis_label(label, width=20) for label in field_order],
-        range=[-0.6, len(field_order) - 1 + 0.6],
-        autorange="reversed",
-        fixedrange=True,
-        showgrid=True,
-        gridcolor=COLORS["border"],
-        zeroline=False,
-        linecolor=COLORS["border"],
-    )
-
-    return base_figure(fig, height=760)
+    return base_figure(fig, height=520)
 
 
 def documentation_detail_figure(
@@ -442,11 +382,7 @@ def documentation_detail_figure(
             hovertemplate="<b>%{y}</b><br>Share: %{x:.1f}%<br>Datasets: %{customdata[0]}<extra></extra>",
             customdata=d[["n_datasets"]].to_numpy(),
         )
-        fig.update_layout(
-            showlegend=False,
-            bargap=0.18,
-            margin=dict(l=220, r=24, t=56, b=44),
-        )
+        fig.update_layout(showlegend=False, bargap=0.18, margin=dict(l=220, r=24, t=56, b=44))
         fig.update_yaxes(
             categoryorder="array",
             categoryarray=d["license_bucket"].astype(str).tolist(),
@@ -460,32 +396,17 @@ def documentation_detail_figure(
         return base_figure(fig, height=520)
 
     if field == "has_creators":
-        fig = full_terms_figure(
-            provenance[provenance["has_creators"] == 1],
-            "creators",
-            modality,
-            short_title,
-        )
+        fig = full_terms_figure(provenance[provenance["has_creators"] == 1], "creators", modality, short_title)
         fig.update_traces(marker_color=modality_color)
         return fig
 
     if field == "has_sources":
-        fig = top_terms_figure(
-            provenance[provenance["has_sources"] == 1],
-            "text_sources",
-            modality,
-            short_title,
-        )
+        fig = top_terms_figure(provenance[provenance["has_sources"] == 1], "text_sources", modality, short_title)
         fig.update_traces(marker_color=modality_color)
         return fig
 
     if field == "has_tasks":
-        fig = top_terms_figure(
-            provenance[provenance["has_tasks"] == 1],
-            "tasks",
-            modality,
-            short_title,
-        )
+        fig = top_terms_figure(provenance[provenance["has_tasks"] == 1], "tasks", modality, short_title)
         fig.update_traces(marker_color=modality_color)
         return fig
 
@@ -509,139 +430,136 @@ def documentation_detail_figure(
         margin=dict(l=40, r=24, t=56, b=24),
         height=420,
         transition=dict(duration=300, easing="cubic-in-out"),
+        showlegend=False,
     )
     return fig
 
 
-def licenses_figure(licenses_by_modality: pd.DataFrame) -> go.Figure:
-    d = licenses_by_modality.copy()
-    d["license_bucket"] = pd.Categorical(d["license_bucket"], categories=LICENSE_ORDER, ordered=True)
-    fig = px.bar(
-        d,
-        x="modality",
-        y="pct_within_modality",
-        color="license_bucket",
-        barmode="stack",
-        category_orders={"modality": MODALITY_ORDER, "license_bucket": LICENSE_ORDER},
-        color_discrete_map=LICENSE_COLORS,
-        labels={"pct_within_modality": "Share within modality (%)", "modality": "Modality"},
-        hover_data={"n_datasets": True, "n_modality_total": True, "pct_within_modality": ":.1f"},
-    )
-    return base_figure(fig, height=430)
+# def licenses_figure(licenses_by_modality: pd.DataFrame) -> go.Figure:
+#     d = licenses_by_modality.copy()
+#     d["license_bucket"] = pd.Categorical(d["license_bucket"], categories=LICENSE_ORDER, ordered=True)
+#     fig = px.bar(
+#         d,
+#         x="modality",
+#         y="pct_within_modality",
+#         color="license_bucket",
+#         barmode="stack",
+#         category_orders={"modality": MODALITY_ORDER, "license_bucket": LICENSE_ORDER},
+#         color_discrete_map=LICENSE_COLORS,
+#         labels={"pct_within_modality": "Share within modality (%)", "modality": "Modality"},
+#         hover_data={"n_datasets": True, "n_modality_total": True, "pct_within_modality": ":.1f"},
+#     )
+#     return base_figure(fig, height=430)
 
 
 def raw_license_table(raw_examples: pd.DataFrame) -> pd.DataFrame:
     return raw_examples.sort_values(["modality", "rank"]).copy()
 
 
-def visibility_modality_figure(visibility_by_modality: pd.DataFrame) -> go.Figure:
-    fig = px.bar(
-        visibility_by_modality,
-        x="modality",
-        y="median_downloads",
-        color="modality",
-        category_orders={"modality": MODALITY_ORDER},
-        color_discrete_map=MODALITY_COLORS,
-        labels={"median_downloads": "Median HF downloads", "modality": "Modality"},
-        hover_data={
-            "n_with_downloads": True,
-            "p25_downloads": ":,.0f",
-            "p75_downloads": ":,.0f",
-            "p90_downloads": ":,.0f",
-            "max_downloads": ":,.0f",
-            "gini_downloads": ":.3f",
-        },
-    )
-    return base_figure(fig, height=420)
+# def visibility_modality_figure(visibility_by_modality: pd.DataFrame) -> go.Figure:
+#     fig = px.bar(
+#         visibility_by_modality,
+#         x="modality",
+#         y="median_downloads",
+#         color="modality",
+#         category_orders={"modality": MODALITY_ORDER},
+#         color_discrete_map=MODALITY_COLORS,
+#         labels={"median_downloads": "Median HF downloads", "modality": "Modality"},
+#         hover_data={
+#             "n_with_downloads": True,
+#             "p25_downloads": ":,.0f",
+#             "p75_downloads": ":,.0f",
+#             "p90_downloads": ":,.0f",
+#             "max_downloads": ":,.0f",
+#             "gini_downloads": ":.3f",
+#         },
+#     )
+#     return base_figure(fig, height=420)
 
 
-def visibility_docflag_figure(visibility_by_docflag: pd.DataFrame, selected_flag: str) -> go.Figure:
-    d = visibility_by_docflag[visibility_by_docflag["doc_flag"] == selected_flag].copy()
-    if d.empty:
-        return base_figure(go.Figure(), height=420)
+# def visibility_docflag_figure(visibility_by_docflag: pd.DataFrame, selected_flag: str) -> go.Figure:
+#     d = visibility_by_docflag[visibility_by_docflag["doc_flag"] == selected_flag].copy()
+#     if d.empty:
+#         return base_figure(go.Figure(), height=420)
 
-    d["group_label"] = d["doc_flag_value"].astype(str).replace({
-        "0": "No",
-        "1": "Yes",
-        "low": "Low",
-        "medium": "Medium",
-        "high": "High",
-    })
+#     d["group_label"] = d["doc_flag_value"].astype(str).replace({
+#         "0": "No",
+#         "1": "Yes",
+#         "low": "Low",
+#         "medium": "Medium",
+#         "high": "High",
+#     })
 
-    fig = px.bar(
-        d,
-        x="modality",
-        y="median_downloads",
-        color="group_label",
-        barmode="group",
-        category_orders={"modality": MODALITY_ORDER},
-        labels={"median_downloads": "Median HF downloads", "modality": "Modality", "group_label": "Group"},
-        hover_data={
-            "n_with_downloads": True,
-            "p25_downloads": ":,.0f",
-            "p75_downloads": ":,.0f",
-            "p90_downloads": ":,.0f",
-            "gini_downloads": ":.3f",
-        },
-    )
-    return base_figure(fig, height=430)
-
-
-def policy_heatmap_figure(policy_long: pd.DataFrame) -> go.Figure:
-    field_order = [
-        "Identifier present (id/name/modality)",
-        "Public link present (HF or paper)",
-        "Source information present",
-        "License information present",
-        "Creator information present",
-        "Annotation information present",
-        "Parent dataset references present",
-        "Generating model references present",
-        "Task information present",
-        "Year/date present",
-    ]
-    d = policy_long.copy()
-    d["field_label"] = pd.Categorical(d["field_label"], categories=field_order, ordered=True)
-    pivot = (
-        d.pivot(index="field_label", columns="modality", values="coverage_pct")
-        .reindex(index=field_order, columns=[m for m in MODALITY_ORDER if m in d["modality"].unique()])
-    )
-
-    fig = go.Figure(
-        data=go.Heatmap(
-            z=pivot.values,
-            x=list(pivot.columns),
-            y=list(pivot.index),
-            colorscale=[
-                [0.0, "#f3efe9"],
-                [0.25, "#d9e4f0"],
-                [0.5, "#9bb9d6"],
-                [0.75, "#5f88b3"],
-                [1.0, "#315c8d"],
-            ],
-            zmin=0,
-            zmax=100,
-            colorbar=dict(title="Coverage %"),
-            hovertemplate="Field: %{y}<br>Modality: %{x}<br>Coverage: %{z:.1f}%<extra></extra>",
-        )
-    )
-    return base_figure(fig, height=520)
+#     fig = px.bar(
+#         d,
+#         x="modality",
+#         y="median_downloads",
+#         color="group_label",
+#         barmode="group",
+#         category_orders={"modality": MODALITY_ORDER},
+#         labels={"median_downloads": "Median HF downloads", "modality": "Modality", "group_label": "Group"},
+#         hover_data={
+#             "n_with_downloads": True,
+#             "p25_downloads": ":,.0f",
+#             "p75_downloads": ":,.0f",
+#             "p90_downloads": ":,.0f",
+#             "gini_downloads": ":.3f",
+#         },
+#     )
+#     return base_figure(fig, height=430)
 
 
-def policy_score_figure(policy_scores: pd.DataFrame) -> go.Figure:
-    d = (
-        policy_scores.groupby("modality", as_index=False)["policy_doc_score"]
-        .mean()
-        .sort_values("modality")
-    )
-    fig = px.bar(
-        d,
-        x="modality",
-        y="policy_doc_score",
-        color="modality",
-        category_orders={"modality": MODALITY_ORDER},
-        color_discrete_map=MODALITY_COLORS,
-        labels={"policy_doc_score": "Mean policy documentation score", "modality": "Modality"},
-    )
-    fig.update_yaxes(range=[0, 1])
-    return base_figure(fig, height=400)
+# def policy_heatmap_figure(policy_long: pd.DataFrame) -> go.Figure:
+#     field_order = [
+#         "Identifier present (id/name/modality)",
+#         "Public link present (HF or paper)",
+#         "Source information present",
+#         "License information present",
+#         "Creator information present",
+#         "Annotation information present",
+#         "Parent dataset references present",
+#         "Generating model references present",
+#         "Task information present",
+#         "Year/date present",
+#     ]
+#     d = policy_long.copy()
+#     d["field_label"] = pd.Categorical(d["field_label"], categories=field_order, ordered=True)
+#     pivot = (
+#         d.pivot(index="field_label", columns="modality", values="coverage_pct")
+#         .reindex(index=field_order, columns=[m for m in MODALITY_ORDER if m in d["modality"].unique()])
+#     )
+
+#     fig = go.Figure(
+#         data=go.Heatmap(
+#             z=pivot.values,
+#             x=list(pivot.columns),
+#             y=list(pivot.index),
+#             colorscale=[
+#                 [0.0, "#f3efe9"],
+#                 [0.25, "#d9e4f0"],
+#                 [0.5, "#9bb9d6"],
+#                 [0.75, "#5f88b3"],
+#                 [1.0, "#315c8d"],
+#             ],
+#             zmin=0,
+#             zmax=100,
+#             colorbar=dict(title="Coverage %"),
+#             hovertemplate="Field: %{y}<br>Modality: %{x}<br>Coverage: %{z:.1f}%<extra></extra>",
+#         )
+#     )
+#     return base_figure(fig, height=520)
+
+
+# def policy_score_figure(policy_scores: pd.DataFrame) -> go.Figure:
+#     d = policy_scores.groupby("modality", as_index=False)["policy_doc_score"].mean().sort_values("modality")
+#     fig = px.bar(
+#         d,
+#         x="modality",
+#         y="policy_doc_score",
+#         color="modality",
+#         category_orders={"modality": MODALITY_ORDER},
+#         color_discrete_map=MODALITY_COLORS,
+#         labels={"policy_doc_score": "Mean policy documentation score", "modality": "Modality"},
+#     )
+#     fig.update_yaxes(range=[0, 1])
+#     return base_figure(fig, height=400)

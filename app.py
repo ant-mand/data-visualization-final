@@ -8,13 +8,9 @@ from dashboard_utils import (
     documentation_figure,
     load_data,
     metric_card,
-    policy_heatmap_figure,
-    policy_score_figure,
-    raw_license_table,
     section,
     top_metrics,
-    visibility_docflag_figure,
-    visibility_modality_figure,
+    raw_license_table,
 )
 
 app = Dash(__name__, title="Multimodal Dataset Provenance Dashboard")
@@ -73,6 +69,7 @@ app.layout = html.Div(
         dcc.Store(id="hovered-card-store", data=""),
         dcc.Store(id="active-metric-store", data=""),
         dcc.Store(id="documentation-view-store", data=None),
+        dcc.Store(id="selected-modality-store", data=None),
         html.Div(
             className="hero-wrap",
             children=[
@@ -170,7 +167,7 @@ app.layout = html.Div(
         ),
         section(
             "Documentation coverage",
-            "Click a bar to drill into what is documented for that modality and field.",
+            "Click a bar to drill into what is documented for that modality and field. Click a legend item to filter to one modality.",
             [
                 html.Div(
                     className="controls-row",
@@ -178,6 +175,13 @@ app.layout = html.Div(
                         html.Button(
                             "Back to coverage",
                             id="documentation-back-button",
+                            n_clicks=0,
+                            style={"display": "none"},
+                            className="hero-button",
+                        ),
+                        html.Button(
+                            "Clear modality filter",
+                            id="clear-modality-button",
                             n_clicks=0,
                             style={"display": "none"},
                             className="hero-button",
@@ -197,54 +201,48 @@ app.layout = html.Div(
                 html.Div(id="documentation-detail-table-wrap", children=[]),
             ],
         ),
-        section(
-            "Platform visibility",
-            "These charts use Hugging Face downloads as a platform visibility measure and compare visibility across modalities and documentation conditions.",
-            [
-                dcc.Graph(
-                    figure=visibility_modality_figure(data["visibility_by_modality"]),
-                    config={"displayModeBar": False, "scrollZoom": False},
-                ),
-                html.Div(
-                    className="controls-row",
-                    children=[
-                        html.Label("Compare visibility by documentation condition:"),
-                        dcc.Dropdown(
-                            id="doc-flag-dropdown",
-                            options=[
-                                {"label": "License present", "value": "has_license"},
-                                {"label": "Sources present", "value": "has_sources"},
-                                {"label": "Human annotation present", "value": "has_human_annotation"},
-                                {"label": "Documentation score bucket", "value": "doc_score_bucket"},
-                            ],
-                            value="has_sources",
-                            clearable=False,
-                            style={"width": "320px"},
-                        ),
-                    ],
-                ),
-                dcc.Graph(
-                    id="visibility-docflag-figure",
-                    config={"displayModeBar": False, "scrollZoom": False},
-                ),
-            ],
-        ),
-        section(
-            "Policy-relevant gaps",
-            "This section translates observable metadata into a policy-relevant checklist. It shows which documentation facts are visible, not whether datasets are legally compliant.",
-            [
-                dcc.Graph(
-                    figure=policy_heatmap_figure(data["policy_checklist_long"]),
-                    config={"displayModeBar": False, "scrollZoom": False},
-                ),
-                dcc.Graph(
-                    figure=policy_score_figure(data["policy_doc_scores"]),
-                    config={"displayModeBar": False, "scrollZoom": False},
-                ),
-            ],
-        ),
     ],
 )
+
+
+@app.callback(
+    Output("selected-modality-store", "data"),
+    Input("documentation-chart", "restyleData"),
+    Input("clear-modality-button", "n_clicks"),
+    State("documentation-chart", "figure"),
+    State("selected-modality-store", "data"),
+    prevent_initial_call=True,
+)
+def set_selected_modality(restyle_data, clear_clicks, figure, current_modality):
+    triggered = callback_context.triggered[0]["prop_id"].split(".")[0]
+
+    if triggered == "clear-modality-button":
+        return None
+
+    if triggered != "documentation-chart" or not restyle_data or not figure:
+        return current_modality
+
+    if len(restyle_data) != 2:
+        return current_modality
+
+    edits, trace_indexes = restyle_data
+    if "visible" not in edits or not trace_indexes:
+        return current_modality
+
+    trace_idx = trace_indexes[0]
+    traces = figure.get("data", [])
+    if trace_idx >= len(traces):
+        return current_modality
+
+    clicked_trace = traces[trace_idx]
+    clicked_modality = str(clicked_trace.get("name", "")).lower()
+    if clicked_modality not in {"text", "speech", "video"}:
+        return current_modality
+
+    if current_modality == clicked_modality:
+        return None
+
+    return clicked_modality
 
 
 @app.callback(
@@ -265,6 +263,9 @@ def set_documentation_view(click_data, back_clicks, current_view):
             return current_view
 
         point = click_data["points"][0]
+        if "customdata" not in point or len(point["customdata"]) < 3:
+            return current_view
+
         return {
             "modality": point["customdata"][0],
             "field": point["customdata"][1],
@@ -278,15 +279,28 @@ def set_documentation_view(click_data, back_clicks, current_view):
     Output("documentation-chart", "figure"),
     Output("documentation-view-title", "children"),
     Output("documentation-back-button", "style"),
+    Output("clear-modality-button", "style"),
     Output("documentation-detail-table-wrap", "children"),
     Input("documentation-view-store", "data"),
+    Input("selected-modality-store", "data"),
 )
-def render_documentation_view(view_state):
+def render_documentation_view(view_state, selected_modality):
     if not view_state:
+        fig = documentation_figure(data["documentation_long"])
+
+        if selected_modality:
+            for trace in fig.data:
+                trace.visible = True if str(trace.name).lower() == selected_modality else "legendonly"
+
+        title = "Coverage of documented fields across modalities."
+        if selected_modality:
+            title = f"Coverage of documented fields for {selected_modality.title()}."
+
         return (
-            documentation_figure(data["documentation_long"]),
-            "Coverage of documented fields across modalities.",
+            fig,
+            title,
             {"display": "none"},
+            {"display": "inline-flex"} if selected_modality else {"display": "none"},
             [],
         )
 
@@ -339,6 +353,7 @@ def render_documentation_view(view_state):
         fig,
         f"{modality.title()} · {field_label}",
         {"display": "inline-flex"},
+        {"display": "none"},
         table,
     )
 
@@ -478,14 +493,6 @@ def update_metric_detail(active_metric, hovered_card):
         flipped_classes["hfdata"],
         flipped_classes["datasetbreakdown"],
     )
-
-
-@app.callback(
-    Output("visibility-docflag-figure", "figure"),
-    Input("doc-flag-dropdown", "value"),
-)
-def update_visibility_docflag(selected_flag: str):
-    return visibility_docflag_figure(data["visibility_by_docflag"], selected_flag)
 
 
 if __name__ == "__main__":
